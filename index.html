@@ -1,0 +1,990 @@
+﻿<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>जलकल विभाग - वाटर सैंपल व सर्टिफिकेट मैनेजर</title>
+    <!-- EmailJS SDK for Real OTP -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Times New Roman', Times, serif, Arial; }
+        body { background-color: #eef2f5; padding: 10px; }
+        
+        /* LOGIN OVERLAY STYLES */
+        .login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); z-index: 999999;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .login-box {
+            background: #fff; width: 90%; max-width: 380px; padding: 25px;
+            border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center;
+        }
+        .login-box h2 { color: #0d47a1; margin-bottom: 15px; font-size: 20px; font-weight: bold; }
+        .login-box input {
+            width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc;
+            border-radius: 5px; font-size: 14px; outline: none;
+        }
+        .login-btn {
+            width: 100%; padding: 10px; background: #0d47a1; color: white;
+            border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 10px;
+        }
+        .login-btn:hover { background: #082d68; }
+
+        /* USER HEADER BAR */
+        .user-bar {
+            max-width: 950px; margin: 0 auto 10px auto; background: #34495e; color: white;
+            padding: 8px 15px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 13px;
+        }
+
+        .tab-nav {
+            display: flex; gap: 5px; max-width: 950px; margin: 0 auto 15px auto;
+            background: #fff; padding: 8px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .tab-btn {
+            flex: 1; padding: 12px; border: none; background: #e9ecef; color: #333;
+            font-weight: bold; font-size: 14px; cursor: pointer; border-radius: 5px; transition: 0.2s;
+        }
+        .tab-btn.active { background: #0d47a1; color: white; }
+
+        .app-card {
+            max-width: 950px; margin: 0 auto; background: #fff; padding: 20px;
+            border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .tab-content { display: none !important; }
+        .tab-content.active { display: block !important; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 15px; }
+        .input-group { display: flex; flex-direction: column; gap: 4px; }
+        .input-group label { font-size: 12px; font-weight: bold; color: #333; }
+        .input-group input, .input-group select { padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; background: #fff; }
+        .section-header {
+            font-size: 15px; font-weight: bold; color: #0d47a1; margin: 15px 0 10px 0;
+            padding-bottom: 5px; border-bottom: 2px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .btn { padding: 8px 14px; border: none; border-radius: 4px; color: white; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .btn-green { background-color: #27ae60; }
+        .btn-orange { background-color: #f39c12; }
+        .btn-red { background-color: #d32f2f; }
+        .btn-purple { background-color: #8e44ad; }
+        .btn-blue { background-color: #1976d2; }
+        .btn-dark { background-color: #34495e; }
+
+        /* LOGO & HEADER STYLES */
+        .header-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 8px; text-align: center; }
+        .header-logo { width: 90px; height: 90px; object-fit: contain; }
+        .report-title-section h2 { font-size: 20px; color: #000; font-weight: bold; font-family: 'Times New Roman', serif; }
+        .report-title-section h4 { font-size: 13px; margin-top: 2px; font-weight: bold; }
+
+        /* REPORT PRINT AREA */
+        #pdf-report-area, #pdf-certificate-area { background: white; padding: 15px; border: 1px solid #ddd; width: 100%; box-sizing: border-box; color: #000; }
+        .meta-info-box { font-size: 13px; font-weight: bold; margin-bottom: 8px; line-height: 1.5; }
+        .meta-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .meta-input { border: 1px solid #777; padding: 2px 6px; font-size: 13px; font-weight: bold; outline: none; background: transparent; }
+
+        .report-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 5px; }
+        .report-table th, .report-table td { border: 1px solid #000; padding: 3px 5px; }
+        .report-table th { background: #fff; text-align: center; font-weight: bold; }
+        .report-table td input { width: 100%; border: none; outline: none; background: transparent; font-size: 11px; font-family: inherit; }
+
+        /* CERTIFICATE TEXT WRAPPING FIX */
+        .cert-paragraph { text-align: justify; word-break: break-word; overflow-wrap: break-word; line-height: 1.8; font-size: 14px; }
+        .inline-editable { border-bottom: 1px solid #000; padding: 0 4px; font-weight: bold; outline: none; display: inline; }
+
+        /* DATABASE TABLE */
+        .db-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .db-table th, .db-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        .db-table th { background: #0d47a1; color: white; }
+        .db-table tr:nth-child(even) { background: #f9f9f9; }
+
+        /* 3D POPUP MODAL & SETTINGS MODAL */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); z-index: 99999;
+            justify-content: center; align-items: center;
+        }
+        .modal-3d {
+            background: #fff; width: 95%; max-width: 900px; max-height: 90vh;
+            border-radius: 12px; padding: 20px; overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6); transform: scale(0.98); animation: popup3D 0.3s forwards ease-out;
+        }
+        .modal-box {
+            background: #fff; width: 90%; max-width: 400px; border-radius: 10px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        @keyframes popup3D { to { transform: scale(1); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0d47a1; padding-bottom: 10px; margin-bottom: 15px; }
+        .close-btn { background: #d32f2f; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .modal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; font-size: 11px; }
+        .modal-item { background: #f8f9fa; padding: 6px 8px; border-radius: 6px; border-left: 3px solid #0d47a1; display: flex; flex-direction: column; gap: 2px; }
+        .modal-item label { font-weight: bold; color: #333; font-size: 11px; }
+        .modal-item input, .modal-item select { padding: 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; width: 100%; outline: none; background: #fff; }
+
+        @media print {
+            @page { size: A4 portrait; margin: 10mm; }
+            body { background: white; padding: 0; }
+            .tab-nav, .no-print, .modal-overlay, .user-bar, .login-overlay { display: none !important; }
+            .app-card { border: none; box-shadow: none; padding: 0; max-width: 100%; }
+            #pdf-report-area, #pdf-certificate-area { border: none; padding: 0; word-wrap: break-word; width: 100%; }
+            .meta-input { border: none !important; }
+            .inline-editable { border-bottom: none !important; }
+            input, textarea, select { border: none !important; resize: none; -webkit-appearance: none; -moz-appearance: none; appearance: none; background: transparent !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. LOGIN OVERLAY SCREEN -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-box">
+            <h2>💧 जलकल विभाग लॉगिन</h2>
+            <input type="text" id="loginUser" placeholder="यूज़रनेम (Username)">
+            <input type="password" id="loginPass" placeholder="पासवर्ड (Password)">
+            <button class="login-btn" onclick="handleLogin()">लॉगिन करें</button>
+            <p style="font-size: 11px; color: #666; margin-top: 15px;">
+                <b>Admin:</b> admin / admin123 | <b>User:</b> user / user123
+            </p>
+        </div>
+    </div>
+
+    <!-- 2. USER STATUS & LOGOUT BAR -->
+    <div id="userBar" class="user-bar" style="display: none;">
+        <span>👤 लॉग इन यूज़र: <b id="loggedInUserDisplay">Admin</b> (<span id="userRoleDisplay">ADMIN</span>)</span>
+        <div>
+            <button class="btn btn-purple" style="padding: 3px 8px; font-size: 11px;" onclick="openSettingsModal()">⚙️ Change ID/Password</button>
+            <button class="btn btn-red" style="padding: 3px 8px; font-size: 11px;" onclick="handleLogout()">🚪 Logout</button>
+        </div>
+    </div>
+
+    <!-- 3. TAB NAVIGATION & MAIN CONTENT -->
+    <div id="mainContent" style="display: none;">
+        <div class="tab-nav">
+            <button id="btnTabEntry" class="tab-btn active admin-only" onclick="switchTab('tab-entry', this)">📝 1. नया डेटा प्रविष्टि (Entry)</button>
+            <button id="btnTabReport" class="tab-btn" onclick="switchTab('tab-report', this)">🖨️ 2. टेस्ट रिपोर्ट (20 Params)</button>
+            <button id="btnTabCert" class="tab-btn" onclick="switchTab('tab-certificate', this)">📜 3. सर्टिफिकेट (Appendix-VIII)</button>
+            <button id="btnTabDb" class="tab-btn" onclick="switchTab('tab-database', this)">📂 4. रिकॉर्ड व बैकअप</button>
+        </div>
+
+        <div class="app-card">
+            
+            <!-- LOGO SELECTOR (ADMIN ONLY) -->
+            <div class="no-print admin-only" style="margin-bottom: 15px; background: #fff3cd; padding: 10px; border: 1px solid #ffeeba; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: bold; font-size: 13px; color: #856404;">🏢 विभाग का लोगो (Logo Settings):</span>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="file" id="logoFileInput" accept="image/*" style="display: none;" onchange="uploadCustomLogo(event)">
+                    <button class="btn btn-purple" onclick="document.getElementById('logoFileInput').click()">📁 लोगो फाइल चुनें (Select Logo)</button>
+                    <button class="btn btn-dark" style="padding: 4px 8px; font-size: 11px;" onclick="resetLogo()">रीसेट</button>
+                </div>
+            </div>
+            
+            <!-- TAB 1: ENTRY FORM -->
+            <div id="tab-entry" class="tab-content active admin-only">
+                <div class="section-header">सैंपल व आवेदक विवरण (Basic Details)</div>
+                <div class="form-grid">
+                    <div class="input-group"><label>सैंपल क्रम संख्या (Sr. No.):</label><input type="text" id="entrySrNo" value="164"></div>
+                    <div class="input-group"><label>Witness Person / आवेदक:</label><input type="text" id="entryWitness" value="sanjay kumar gupta"></div>
+                    
+                    <!-- WATER SOURCE DROPDOWN SELECTION -->
+                    <div class="input-group">
+                        <label>पानी का स्रोत (Source):</label>
+                        <select id="entrySource">
+                            <option value="Submersible Pump">Submersible Pump</option>
+                            <option value="Handpump">Handpump</option>
+                            <option value="Tubewell Supply">Tubewell Supply</option>
+                            <option value="Overhead Tank (OHT)">Overhead Tank (OHT)</option>
+                            <option value="Tap Water / Domestic Supply">Tap Water / Domestic Supply</option>
+                            <option value="Borewell">Borewell</option>
+                            <option value="Handpump / Submersible">Handpump / Submersible</option>
+                            <option value="Water Treatment Plant (WTP)">Water Treatment Plant (WTP)</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group"><label>स्थान / पता (Location):</label><input type="text" id="entryLocation" value="brij en enclave colony"></div>
+                    <div class="input-group"><label>टेस्ट दिनांक (Test Date):</label><input type="text" id="entryDate" value="04/04/2026"></div>
+                    <div class="input-group"><label>जाँचकर्ता (Chemist Incharge):</label><input type="text" id="entryChemist" value="Mr Shambhu Nath (Chemist incharge)"></div>
+                </div>
+
+                <div class="section-header">
+                    <span>ऑटो-कैलकुलेशन हेतु मुख्य 4 रीडिंग</span>
+                    <button class="btn btn-blue" style="padding: 2px 8px; font-size: 11px;" onclick="autoCalculateAll()">⚡ Auto Calculate Values</button>
+                </div>
+                <div class="form-grid">
+                    <div class="input-group"><label>1. pH Value (6.5 – 8.5):</label><input type="number" step="0.1" id="in_ph" value="6.9" oninput="autoCalculateAll()"></div>
+                    <div class="input-group"><label>2. Turbidity NTU (1 – 5):</label><input type="number" step="0.1" id="in_turbidity" value="0.3" oninput="autoCalculateAll()"></div>
+                    <div class="input-group"><label>10. TDS mg/l (150 – 500):</label><input type="number" id="in_tds" value="22" oninput="autoCalculateAll()"></div>
+                    <div class="input-group"><label>11. Colour Hazen Units (5 – 15):</label><input type="number" id="in_colour" value="5" oninput="autoCalculateAll()"></div>
+                </div>
+
+                <div class="section-header">समस्त 20 पैरामीटर्स (जरुरत पड़ने पर मैन्युअल एडिट करें)</div>
+                <div class="form-grid" id="manualEntryGrid"></div>
+
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <button class="btn btn-green" onclick="generateReportFromEntry()">रिपोर्ट व सर्टिफिकेट बनाएं ➔</button>
+                    <button class="btn btn-orange" onclick="clearEntryForm()">रीसेट करें (Reset)</button>
+                </div>
+            </div>
+
+            <!-- TAB 2: TEST REPORT -->
+            <div id="tab-report" class="tab-content">
+                <div class="no-print" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; background: #e8f4fc; padding: 10px; border-radius: 4px; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <label style="font-weight: bold; font-size: 13px;">📂 सेव की गई रिपोर्ट चुनें:</label>
+                        <select id="savedReportsDropdown" onchange="loadSelectedReport(this.value)" style="padding: 5px; border-radius: 4px; border: 1px solid #aaa; font-weight: bold;">
+                            <option value="">-- चुनें --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button class="btn btn-green admin-only" onclick="saveToDatabase()">💾 डेटाबेस में सेव करें</button>
+                        <button class="btn btn-red" onclick="downloadPDF()">📄 Print / Save PDF</button>
+                    </div>
+                </div>
+
+                <div id="pdf-report-area">
+                    <div class="header-container">
+                        <img id="appLogo1" class="header-logo" src="" alt="Department Logo" style="display:none;">
+                        <div id="placeholderLogo1" style="width: 80px; height: 80px; border: 2px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 11px; text-align: center; font-weight: bold; color: #666;">[स्थान: लोगो]</div>
+                        <div class="report-title-section">
+                            <h2>जलकल विभाग नगर निगम, वाराणसी</h2>
+                            <h4>TEST REPORT (As per IS 10500:2012)</h4>
+                        </div>
+                    </div>
+                    <hr style="border: 1px solid #000; margin-bottom: 8px;">
+
+                    <div class="meta-info-box">
+                        <div class="meta-row">
+                            <span>SL.NO: <input type="text" id="repSrNo" class="meta-input" style="width: 80px;"></span>
+                            <span>Details of Samples: Testing water sample for drinking purpose (As per IS 10500:2012)</span>
+                        </div>
+                        <div class="meta-row" style="justify-content: flex-start; gap: 5px;">
+                            <span>Location:</span>
+                            <input type="text" id="repLocation" class="meta-input" style="flex: 1;">
+                        </div>
+                        <div class="meta-row">
+                            <span>Test Date: <input type="text" id="repDate" class="meta-input" style="width: 170px;"></span>
+                            <span>Sample collected by: <input type="text" id="repSource" class="meta-input" style="width: 170px;"></span>
+                            <span>Witness of person: <input type="text" id="repWitness" class="meta-input" style="width: 170px;"></span>
+                        </div>
+                    </div>
+
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">Sl.No.</th>
+                                <th>Parameter</th>
+                                <th style="width: 190px;">Parameter Acceptable-Permissible</th>
+                                <th style="width: 110px;">Observed Values</th>
+                                <th style="width: 100px;">Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody"></tbody>
+                    </table>
+
+                    <div style="margin-top: 10px; font-size: 11px; font-weight: bold;">
+                        Report of suitability of water for drinking purpose:
+                        <input type="text" id="repSuitability" value="Water is fit for drinking purpose" style="width: 100%; border: 1px solid #777; padding: 3px; font-weight: bold; margin-top: 3px;">
+                    </div>
+
+                    <div style="margin-top: 25px; text-align: right; float: right; width: 220px; font-size: 11px; font-weight: bold;">
+                        Signature - Chemist<br>
+                        जलकल विभाग, नगर निगम<br>
+                        वाराणसी
+                    </div>
+                    <div style="clear: both;"></div>
+                </div>
+            </div>
+
+            <!-- TAB 3: CERTIFICATE -->
+            <div id="tab-certificate" class="tab-content">
+                <div class="no-print" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; background: #e8f4fc; padding: 10px; border-radius: 4px;">
+                    <span>📜 <b>Safe Drinking Water Certificate (Appendix-VIII)</b></span>
+                    <button class="btn btn-red" onclick="downloadPDF()">📄 Print Certificate</button>
+                </div>
+
+                <div id="pdf-certificate-area" style="padding: 20px 30px;">
+                    <div class="header-container" style="flex-direction: column; text-align: center; gap: 5px;">
+                        <img id="appLogo2" class="header-logo" src="" alt="Department Logo" style="display:none; width: 80px; height: 80px;">
+                        <div id="placeholderLogo2" style="width: 80px; height: 80px; border: 2px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 10px; text-align: center; font-weight: bold; color: #666; margin: 0 auto;">[स्थान: लोगो]</div>
+                        <h3 style="font-size: 15px; font-weight: bold; text-decoration: underline; margin-top: 5px;">APPENDIX-VIII</h3>
+                        <h3 style="font-size: 15px; font-weight: bold; text-decoration: underline;">PROFORMA REGARDING SAFE DRINKING WATER</h3>
+                        <h2 style="font-size: 18px; font-weight: bold; margin-top: 5px;">CERTIFICATE</h2>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 20px; font-weight: bold; font-size: 14px;">
+                        <span>NO- <span id="certNo" class="inline-editable" contenteditable="true">JK/2026/164</span></span>
+                        <span>Date- <span id="certDate" class="inline-editable" contenteditable="true">04/04/2026</span></span>
+                    </div>
+
+                    <p class="cert-paragraph" style="margin-top: 20px;">
+                        It is certified that an inspection team headed by 
+                        <span id="certChemist" class="inline-editable" contenteditable="true">Mr Shambhu Nath (Chemist incharge)</span> 
+                        from <b>Jalkal Vibhag Nagar Nigam Bhelupur Varanasi</b> inspected the 
+                        <span id="certLocation" class="inline-editable" contenteditable="true">brij en enclave colony</span> 
+                        on <span id="certInspDate" class="inline-editable" contenteditable="true">04/04/2026</span> 
+                        and found that the Chemical and Bacteriological test of water sample is satisfactory and potable.
+                    </p>
+
+                    <div style="margin-top: 15px; font-size: 14px; text-indent: 20px;">
+                        The above valid for a period of <b>06 months</b>.
+                    </div>
+
+                    <div style="margin-top: 50px; float: right; width: 230px; font-size: 13px; line-height: 1.6;">
+                        Signature: ………………………………<br>
+                        Name: ……………………………………<br>
+                        Designation: ……………………………
+                    </div>
+                    <div style="clear: both;"></div>
+
+                    <div style="margin-top: 20px; font-weight: bold; font-size: 13px;">
+                        To,<br>
+                        <div id="certToAddress" class="inline-editable" contenteditable="true" style="display: inline-block; min-width: 300px; white-space: pre-line; line-height: 1.4; margin-top: 4px;">sanjay kumar gupta&#10;brij en enclave colony&#10;(Name & Address of the Institution)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: DATABASE & BACKUP -->
+            <div id="tab-database" class="tab-content">
+                <div class="section-header">
+                    <span>सुरक्षित रिकॉर्ड्स डेटाबेस</span>
+                    <div class="admin-only" style="display: flex; gap: 8px;">
+                        <button class="btn btn-dark" onclick="exportBackup()">📥 Backup Data</button>
+                        <button class="btn btn-blue" onclick="document.getElementById('restoreFile').click()">📤 Restore Data</button>
+                        <input type="file" id="restoreFile" style="display: none;" accept=".json" onchange="importBackup(event)">
+                    </div>
+                </div>
+                <table class="db-table">
+                    <thead>
+                        <tr>
+                            <th>Sr. No</th>
+                            <th>व्यक्ति / संस्था</th>
+                            <th>स्थान (Location)</th>
+                            <th>TDS</th>
+                            <th>pH</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="databaseBody">
+                        <tr><td colspan="6">कोई रिकॉर्ड सेव नहीं है।</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 4. 3D EDITABLE POPUP MODAL WINDOW -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal-3d">
+            <div class="modal-header">
+                <h3>✏️ Edit All 20 Parameters in 3D Popup</h3>
+                <button class="close-btn" onclick="closePopup()">✕ Close</button>
+            </div>
+            <div id="modalContent" class="modal-grid"></div>
+            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn btn-red" id="popupPdfBtn">📄 Print PDF</button>
+                <button class="btn btn-green admin-only" id="popupSaveBtn">💾 Save Changes</button>
+                <button class="btn btn-dark" onclick="closePopup()">✕ Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. CHANGE ID / PASSWORD & OTP MODAL -->
+    <div id="settingsModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 style="color: #0d47a1; margin-bottom: 12px;">⚙️ ID व पासवर्ड बदलें</h3>
+            
+            <div class="input-group" style="margin-bottom: 8px;">
+                <label>नया यूज़रनेम (Username):</label>
+                <input type="text" id="newUsername">
+            </div>
+            <div class="input-group" style="margin-bottom: 8px;">
+                <label>नया पासवर्ड (New Password):</label>
+                <input type="password" id="newPassword">
+            </div>
+            <div class="input-group" style="margin-bottom: 12px;">
+                <label>आपका ईमेल (OTP प्राप्त करने के लिए):</label>
+                <input type="email" id="userEmail" placeholder="example@gmail.com">
+            </div>
+
+            <button class="btn btn-blue" style="width: 100%; margin-bottom: 10px;" onclick="sendOTP()">📧 Send Real OTP</button>
+
+            <div id="otpSection" style="display: none; border-top: 1px dashed #ccc; padding-top: 10px; margin-top: 10px;">
+                <div class="input-group" style="margin-bottom: 8px;">
+                    <label>6-अंकों का OTP दर्ज करें:</label>
+                    <input type="text" id="enteredOTP" placeholder="Enter OTP">
+                </div>
+                <button class="btn btn-green" style="width: 100%;" onclick="verifyAndSaveCredentials()">✓ Verify OTP & Update</button>
+            </div>
+
+            <button class="btn btn-dark" style="width: 100%; margin-top: 10px;" onclick="closeSettingsModal()">✕ Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // EmailJS Init
+        (function(){
+            emailjs.init("YOUR_PUBLIC_KEY");
+        })();
+
+        const parameters = [
+            { id: "ph", name: "pH Value", limit: "6.5 – 8.5", defaultVal: "6.9", rem: "" },
+            { id: "turbidity", name: "Turbidity (NTU)", limit: "1 – 5", defaultVal: "0.3", rem: "" },
+            { id: "iron", name: "Iron (as Fe) mg/l", limit: "0.3 – 1.0", defaultVal: "0.4", rem: "" },
+            { id: "sulphate", name: "Sulphate (as SO4) mg/l", limit: "200 – 400", defaultVal: "42", rem: "" },
+            { id: "chloride", name: "Chloride (as Cl) mg/l", limit: "250 – 1000", defaultVal: "51", rem: "" },
+            { id: "chlorine", name: "Residual Free Chlorine mg/l", limit: "0.2 – 1.0", defaultVal: "NILL", rem: "" },
+            { id: "alkalinity", name: "Alkalinity as CaCO3 mg/l", limit: "200 – 600", defaultVal: "180", rem: "" },
+            { id: "arsenic", name: "Arsenic (as As) mg/l", limit: "0.01 – 0.01", defaultVal: "0.0", rem: "" },
+            { id: "mpn", name: "MPN /100 ml", limit: "0.0 – 0.0", defaultVal: "NILL", rem: "" },
+            { id: "tds", name: "TDS mg/l", limit: "150 – 500", defaultVal: "22", rem: "" },
+            { id: "colour", name: "Colour (Hazen Units)", limit: "5 – 15", defaultVal: "5", rem: "" },
+            { id: "hardness", name: "Hardness as CaCO3 mg/l", limit: "200 – 600", defaultVal: "150", rem: "" },
+            { id: "fluoride", name: "Fluoride as F mg/l", limit: "1.0 – 1.5", defaultVal: "0.0", rem: "" },
+            { id: "magnesium", name: "Magnesium PPM", limit: "30 – 100", defaultVal: "37", rem: "" },
+            { id: "nitrite", name: "Nitrite as NO3", limit: "0.2 – 0.5", defaultVal: "NILL", rem: "" },
+            { id: "nitrate", name: "Nitrate as NO3", limit: "0.1 – 0.1", defaultVal: "NILL", rem: "" },
+            { id: "oxygen", name: "Dissolved Oxygen PPM", limit: "5 – 10", defaultVal: "7.9", rem: "" },
+            { id: "taste", name: "Taste & Odour", limit: "Unobjectionable", defaultVal: "Unobjectionable", rem: "" },
+            { id: "calcium", name: "Calcium mg/l", limit: "75 – 200", defaultVal: "75", rem: "" },
+            { id: "conductivity", name: "Conductivity", limit: "200 – 800 µ/cm", defaultVal: "163", rem: "" }
+        ];
+
+        let defaultUsers = {
+            ADMIN: { username: "admin", password: "admin123" },
+            USER: { username: "user", password: "user123" }
+        };
+
+        function getStoredUsers() {
+            const saved = localStorage.getItem('jal_app_users');
+            return saved ? JSON.parse(saved) : defaultUsers;
+        }
+
+        let currentUser = null;
+        let activeRecordIndex = -1;
+        let generatedOTP = null;
+
+        // AUTHENTICATION LOGIC
+        function handleLogin() {
+            const u = document.getElementById('loginUser').value.trim();
+            const p = document.getElementById('loginPass').value.trim();
+            const users = getStoredUsers();
+
+            if (u === users.ADMIN.username && p === users.ADMIN.password) {
+                currentUser = { name: u, role: 'ADMIN' };
+            } else if (u === users.USER.username && p === users.USER.password) {
+                currentUser = { name: u, role: 'USER' };
+            } else {
+                alert('गलत यूजरनेम या पासवर्ड!');
+                return;
+            }
+
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('userBar').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'block';
+
+            document.getElementById('loggedInUserDisplay').innerText = currentUser.name;
+            document.getElementById('userRoleDisplay').innerText = currentUser.role;
+
+            applyRolePermissions();
+            autoCalculateAll();
+            generateReportFromEntry();
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            document.getElementById('loginOverlay').style.display = 'flex';
+            document.getElementById('userBar').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('loginUser').value = '';
+            document.getElementById('loginPass').value = '';
+        }
+
+        function applyRolePermissions() {
+            const adminElements = document.querySelectorAll('.admin-only');
+            if (currentUser.role === 'USER') {
+                adminElements.forEach(el => el.style.setProperty('display', 'none', 'important'));
+                switchTab('tab-report', document.getElementById('btnTabReport'));
+            } else {
+                adminElements.forEach(el => el.style.removeProperty('display'));
+                switchTab('tab-entry', document.getElementById('btnTabEntry'));
+            }
+            renderDatabase();
+        }
+
+        // LOGO HANDLING
+        function uploadCustomLogo(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const logoDataUrl = e.target.result;
+                    localStorage.setItem('jal_custom_logo', logoDataUrl);
+                    applyLogo(logoDataUrl);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function applyLogo(dataUrl) {
+            if (dataUrl) {
+                document.getElementById('appLogo1').src = dataUrl;
+                document.getElementById('appLogo1').style.display = 'block';
+                document.getElementById('placeholderLogo1').style.display = 'none';
+                document.getElementById('appLogo2').src = dataUrl;
+                document.getElementById('appLogo2').style.display = 'block';
+                document.getElementById('placeholderLogo2').style.display = 'none';
+            } else {
+                document.getElementById('appLogo1').style.display = 'none';
+                document.getElementById('placeholderLogo1').style.display = 'flex';
+                document.getElementById('appLogo2').style.display = 'none';
+                document.getElementById('placeholderLogo2').style.display = 'flex';
+            }
+        }
+
+        function resetLogo() {
+            localStorage.removeItem('jal_custom_logo');
+            applyLogo(null);
+        }
+
+        function loadSavedLogo() {
+            const savedLogo = localStorage.getItem('jal_custom_logo');
+            if (savedLogo) applyLogo(savedLogo);
+        }
+
+        function initManualEntryGrid() {
+            const grid = document.getElementById('manualEntryGrid');
+            if(!grid) return;
+            grid.innerHTML = '';
+            parameters.forEach(p => {
+                grid.innerHTML += `
+                    <div class="input-group">
+                        <label>${p.name}:</label>
+                        <input type="text" id="in_manual_${p.id}" value="${p.defaultVal}">
+                    </div>
+                `;
+            });
+        }
+
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+            if (btnElement) btnElement.classList.add('active');
+        }
+
+        // FULL 20 PARAMETERS AUTO CALCULATE FUNCTION
+        function autoCalculateAll() {
+            const tds = parseFloat(document.getElementById('in_tds').value) || 0;
+            const ph = document.getElementById('in_ph').value || "6.9";
+            const turbidity = document.getElementById('in_turbidity').value || "0.3";
+            const colour = document.getElementById('in_colour').value || "5";
+
+            document.getElementById('in_manual_ph').value = ph;
+            document.getElementById('in_manual_turbidity').value = turbidity;
+            document.getElementById('in_manual_tds').value = tds;
+            document.getElementById('in_manual_colour').value = colour;
+
+            if (tds > 0) {
+                document.getElementById('in_manual_hardness').value = Math.round(tds * 0.8) || "150";
+                document.getElementById('in_manual_chloride').value = Math.round(tds * 0.55) || "51";
+                document.getElementById('in_manual_sulphate').value = Math.round(tds * 0.64) || "42";
+                document.getElementById('in_manual_alkalinity').value = Math.round(tds * 0.5) || "180";
+                document.getElementById('in_manual_calcium').value = Math.round(tds * 0.48) || "75";
+                document.getElementById('in_manual_magnesium').value = Math.round(tds * 0.08) || "37";
+                document.getElementById('in_manual_conductivity').value = Math.round(tds * 1.56) || "163";
+            }
+
+            const defaultFillMap = {
+                iron: "0.4",
+                chlorine: "NILL",
+                arsenic: "0.0",
+                mpn: "NILL",
+                fluoride: "0.0",
+                nitrite: "NILL",
+                nitrate: "NILL",
+                oxygen: "7.9",
+                taste: "Unobjectionable"
+            };
+
+            Object.keys(defaultFillMap).forEach(id => {
+                const inputEl = document.getElementById(`in_manual_${id}`);
+                if (inputEl && (inputEl.value.trim() === "" || inputEl.value === undefined)) {
+                    inputEl.value = defaultFillMap[id];
+                }
+            });
+        }
+
+        // RESET FORM FUNCTION
+        function clearEntryForm() {
+            document.getElementById('entryWitness').value = '';
+            document.getElementById('entryLocation').value = '';
+            document.getElementById('entrySource').selectedIndex = 0;
+            
+            document.getElementById('in_ph').value = '';
+            document.getElementById('in_turbidity').value = '';
+            document.getElementById('in_tds').value = '';
+            document.getElementById('in_colour').value = '';
+
+            parameters.forEach(p => {
+                const el = document.getElementById(`in_manual_${p.id}`);
+                if (el) el.value = '';
+            });
+
+            const currentSrNo = parseInt(document.getElementById('entrySrNo').value) || 0;
+            if (currentSrNo > 0) {
+                document.getElementById('entrySrNo').value = currentSrNo + 1;
+            }
+
+            activeRecordIndex = -1;
+            alert("फ़ॉर्म रीसेट कर दिया गया है!");
+        }
+
+        function generateReportFromEntry() {
+            const srNo = document.getElementById('entrySrNo').value;
+            const witness = document.getElementById('entryWitness').value;
+            const source = document.getElementById('entrySource').value;
+            const location = document.getElementById('entryLocation').value;
+            const date = document.getElementById('entryDate').value;
+            const chemist = document.getElementById('entryChemist').value;
+
+            document.getElementById('repSrNo').value = srNo;
+            document.getElementById('repWitness').value = witness;
+            document.getElementById('repSource').value = source;
+            document.getElementById('repLocation').value = location;
+            document.getElementById('repDate').value = date;
+
+            document.getElementById('certNo').innerText = "JK/2026/" + srNo;
+            document.getElementById('certDate').innerText = date;
+            document.getElementById('certInspDate').innerText = date;
+            document.getElementById('certChemist').innerText = chemist;
+            document.getElementById('certLocation').innerText = location;
+            document.getElementById('certToAddress').innerText = witness + "\n" + location + "\n(Name & Address of the Institution)";
+
+            const tbody = document.getElementById('reportTableBody');
+            tbody.innerHTML = '';
+            
+            parameters.forEach((p, idx) => {
+                const manualValEl = document.getElementById(`in_manual_${p.id}`);
+                const manualVal = manualValEl ? manualValEl.value : p.defaultVal;
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="text-align: center;">${idx + 1}</td>
+                        <td>${p.name}</td>
+                        <td style="text-align: center;">${p.limit}</td>
+                        <td><input type="text" id="r_val_${p.id}" value="${manualVal}"></td>
+                        <td><input type="text" id="r_rem_${p.id}" value="${p.rem}"></td>
+                    </tr>
+                `;
+            });
+
+            switchTab('tab-report', document.getElementById('btnTabReport'));
+        }
+
+        function downloadPDF() { window.print(); }
+
+        function saveToDatabase() {
+            if (currentUser.role !== 'ADMIN') return;
+            const db = JSON.parse(localStorage.getItem('jal_manager_db')) || [];
+            
+            const recordData = {
+                srNo: document.getElementById('repSrNo').value,
+                witness: document.getElementById('repWitness').value,
+                source: document.getElementById('repSource').value,
+                location: document.getElementById('repLocation').value,
+                date: document.getElementById('repDate').value,
+                chemist: document.getElementById('certChemist').innerText,
+                suitability: document.getElementById('repSuitability').value,
+                vals: {}
+            };
+
+            parameters.forEach(p => {
+                const valInput = document.getElementById(`r_val_${p.id}`);
+                const remInput = document.getElementById(`r_rem_${p.id}`);
+                recordData.vals[p.id] = {
+                    val: valInput ? valInput.value : p.defaultVal,
+                    rem: remInput ? remInput.value : p.rem
+                };
+            });
+
+            if (activeRecordIndex === -1) db.push(recordData);
+            else { db[activeRecordIndex] = recordData; activeRecordIndex = -1; }
+
+            localStorage.setItem('jal_manager_db', JSON.stringify(db));
+            renderDatabase();
+            populateReportsDropdown();
+            alert('डेटाबेस में रिपोर्ट सेव हो गई!');
+        }
+
+        function renderDatabase() {
+            const db = JSON.parse(localStorage.getItem('jal_manager_db')) || [];
+            const tbody = document.getElementById('databaseBody');
+            
+            if (!tbody) return;
+
+            if (db.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">कोई रिकॉर्ड सेव नहीं है।</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '';
+            db.forEach((rec, idx) => {
+                const tds = rec.vals['tds'] ? rec.vals['tds'].val : '-';
+                const ph = rec.vals['ph'] ? rec.vals['ph'].val : '-';
+                const isAdmin = currentUser && currentUser.role === 'ADMIN';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${rec.srNo}</b></td>
+                        <td>${rec.witness || 'N/A'}</td>
+                        <td>${rec.location || 'N/A'}</td>
+                        <td>${tds}</td>
+                        <td>${ph}</td>
+                        <td>
+                            ${isAdmin ? `<button class="btn btn-purple" style="padding:3px 6px; font-size:11px;" onclick="open3DPopup(${idx})">👁️ 3D Edit</button>` : ''}
+                            <button class="btn btn-blue" style="padding:3px 6px; font-size:11px;" onclick="loadRecordToReport(${idx}); switchTab('tab-report', document.getElementById('btnTabReport'));">📄 View</button>
+                            ${isAdmin ? `<button class="btn btn-red" style="padding:3px 6px; font-size:11px;" onclick="deleteDatabaseRecord(${idx})">Del</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function populateReportsDropdown() {
+            const db = JSON.parse(localStorage.getItem('jal_manager_db')) || [];
+            const dropdown = document.getElementById('savedReportsDropdown');
+            if (!dropdown) return;
+
+            dropdown.innerHTML = '<option value="">-- सेव की गई रिपोर्ट चुनें --</option>';
+            
+            db.forEach((rec, idx) => {
+                dropdown.innerHTML += `<option value="${idx}">Sr. No: ${rec.srNo} - ${rec.witness} (${(rec.location || '').substring(0, 18)}...)</option>`;
+            });
+        }
+
+        function loadSelectedReport(idxStr) {
+            if (idxStr !== "") loadRecordToReport(parseInt(idxStr));
+        }
+
+        function open3DPopup(idx) {
+            const db = JSON.parse(localStorage.getItem('jal_manager_db')) || [];
+            const rec = db[idx];
+            
+            const sourceOptions = [
+                "Submersible Pump", "Handpump", "Tubewell Supply", "Overhead Tank (OHT)",
+                "Tap Water / Domestic Supply", "Borewell", "Handpump / Submersible", "Water Treatment Plant (WTP)"
+            ];
+
+            let sourceSelectHtml = `<select id="pop_source">`;
+            sourceOptions.forEach(opt => {
+                const selected = (rec.source === opt) ? 'selected' : '';
+                sourceSelectHtml += `<option value="${opt}" ${selected}>${opt}</option>`;
+            });
+            sourceSelectHtml += `</select>`;
+            
+            let html = `
+                <div class="modal-item"><label>Sr No:</label><input type="text" id="pop_srNo" value="${rec.srNo || ''}"></div>
+                <div class="modal-item"><label>Witness/व्यक्ति:</label><input type="text" id="pop_witness" value="${rec.witness || ''}"></div>
+                <div class="modal-item"><label>स्रोत (Source):</label>${sourceSelectHtml}</div>
+                <div class="modal-item"><label>दिनांक:</label><input type="text" id="pop_date" value="${rec.date || ''}"></div>
+                <div class="modal-item" style="grid-column: span 2;"><label>स्थान (Location):</label><input type="text" id="pop_location" value="${rec.location || ''}"></div>
+            `;
+
+            parameters.forEach(p => {
+                const currentVal = (rec.vals && rec.vals[p.id]) ? rec.vals[p.id].val : p.defaultVal;
+                html += `
+                    <div class="modal-item">
+                        <label>${p.name}:</label>
+                        <input type="text" id="pop_val_${p.id}" value="${currentVal}">
+                    </div>
+                `;
+            });
+
+            document.getElementById('modalContent').innerHTML = html;
+            
+            document.getElementById('popupSaveBtn').onclick = () => savePopupData(idx);
+            document.getElementById('popupPdfBtn').onclick = () => {
+                if(currentUser.role === 'ADMIN') savePopupData(idx, false);
+                loadRecordToReport(idx);
+                closePopup();
+                switchTab('tab-report', document.getElementById('btnTabReport'));
+                downloadPDF();
+            };
+
+            document.getElementById('modalOverlay').style.display = 'flex';
+        }
+
+        function savePopupData(idx, showNotification = true) {
+            if (currentUser.role !== 'ADMIN') return;
+            const db = JSON.parse(localStorage.getItem('jal_manager_db')) || [];
+            if (!db[idx]) return;
+
+            db[idx].srNo = document.getElementById('pop_srNo').value;
+            db[idx].witness = document.getElementById('pop_witness').value;
+            db[idx].source = document.getElementById('pop_source').value;
+            db[idx].date = document.getElementById('pop_date').value;
+            db[idx].location = document.getElementById('pop_location').value;
+
+            parameters.forEach(p => {
+                const inputElement = document.getElementById(`pop_val_${p.id}`);
+                if (inputElement && db[idx].vals[p.id]) {
+                    db[idx].vals[p.id].val = inputElement.value;
+                }
+            });
+
+            localStorage.setItem('jal_manager_db', JSON.stringify(db));
+            renderDatabase();
+            populateReportsDropdown();
+            if (showNotification) {
+                closePopup();
+                alert('डेटा 3D पॉपअप से अपडेट हो गया!');
+            }
+        }
+
+        function loadRecordToReport(idx) {
+            const db = JSON.parse(localStorage.getItem('jal_manager_db')) || [];
+            const rec = db[idx];
+            if (!rec) return;
+
+            document.getElementById('repSrNo').value = rec.srNo || '';
+            document.getElementById('repWitness').value = rec.witness || '';
+            document.getElementById('repSource').value = rec.source || '';
+            document.getElementById('repLocation').value = rec.location || '';
+            document.getElementById('repDate').value = rec.date || '';
+
+            document.getElementById('certNo').innerText = "JK/2026/" + rec.srNo;
+            document.getElementById('certDate').innerText = rec.date || '';
+            document.getElementById('certInspDate').innerText = rec.date || '';
+            document.getElementById('certChemist').innerText = rec.chemist || "Mr Shambhu Nath (Chemist incharge)";
+            document.getElementById('certLocation').innerText = rec.location || '';
+            document.getElementById('certToAddress').innerText = rec.witness + "\n" + rec.location + "\n(Name & Address of the Institution)";
+
+            const tbody = document.getElementById('reportTableBody');
+            tbody.innerHTML = '';
+            
+            parameters.forEach((p, i) => {
+                const val = (rec.vals && rec.vals[p.id]) ? rec.vals[p.id].val : p.defaultVal;
+                const rem = (rec.vals && rec.vals[p.id]) ? rec.vals[p.id].rem : p.rem;
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="text-align: center;">${i + 1}</td>
+                        <td>${p.name}</td>
+                        <td style="text-align: center;">${p.limit}</td>
+                        <td><input type="text" id="r_val_${p.id}" value="${val}"></td>
+                        <td><input type="text" id="r_rem_${p.id}" value="${rem}"></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function exportBackup() {
+            const db = localStorage.getItem('jal_manager_db') || '[]';
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(db);
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `JalKal_Backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importBackup(event) {
+            const fileReader = new FileReader();
+            fileReader.onload = function(e) {
+                try {
+                    const parsedData = JSON.parse(e.target.result);
+                    if (Array.isArray(parsedData)) {
+                        localStorage.setItem('jal_manager_db', JSON.stringify(parsedData));
+                        renderDatabase();
+                        populateReportsDropdown();
+                        alert('डेटा रिस्टोर हो गया!');
+                    } else { alert('फ़ाइल प्रारूप सही नहीं है!'); }
+                } catch (err) { alert('बैकअप फ़ाइल लोड करने में त्रुटि हुई!'); }
+            };
+            if(event.target.files[0]) fileReader.readAsText(event.target.files[0]);
+        }
+
+        function closePopup() { document.getElementById('modalOverlay').style.display = 'none'; }
+
+        function deleteDatabaseRecord(idx) {
+            if (currentUser.role !== 'ADMIN') return;
+            if (confirm('क्या आप इसे डिलीट करना चाहते हैं?')) {
+                const db = JSON.parse(localStorage.getItem('jal_manager_db')) || [];
+                db.splice(idx, 1);
+                localStorage.setItem('jal_manager_db', JSON.stringify(db));
+                renderDatabase();
+                populateReportsDropdown();
+            }
+        }
+
+        // OTP & CHANGE CREDENTIALS LOGIC
+        function openSettingsModal() {
+            const users = getStoredUsers();
+            const currentCreds = users[currentUser.role];
+            document.getElementById('newUsername').value = currentCreds.username;
+            document.getElementById('newPassword').value = currentCreds.password;
+            document.getElementById('otpSection').style.display = 'none';
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        function sendOTP() {
+            const email = document.getElementById('userEmail').value.trim();
+            if (!email) {
+                alert('कृपया अपना सही ईमेल दर्ज करें!');
+                return;
+            }
+
+            generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
+
+            const templateParams = {
+                to_email: email,
+                otp: generatedOTP
+            };
+
+            emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
+                .then(function(response) {
+                    alert('OTP आपके ईमेल पर भेज दिया गया है!');
+                    document.getElementById('otpSection').style.display = 'block';
+                }, function(error) {
+                    alert('OTP भेजने में समस्या हुई। कृपया ईमेल जाँचें या कंसोल में देखें।');
+                    console.log('Test Mode OTP:', generatedOTP);
+                    document.getElementById('otpSection').style.display = 'block';
+                });
+        }
+
+        function verifyAndSaveCredentials() {
+            const entered = document.getElementById('enteredOTP').value.trim();
+            if (entered !== generatedOTP) {
+                alert('गलत OTP! कृपया पुनः प्रयास करें।');
+                return;
+            }
+
+            const newU = document.getElementById('newUsername').value.trim();
+            const newP = document.getElementById('newPassword').value.trim();
+
+            if (!newU || !newP) {
+                alert('यूज़रनेम और पासवर्ड खाली नहीं हो सकते!');
+                return;
+            }
+
+            const users = getStoredUsers();
+            users[currentUser.role] = { username: newU, password: newP };
+            
+            localStorage.setItem('jal_app_users', JSON.stringify(users));
+
+            alert('आपका ID और Password सफलतापूर्वक बदल दिया गया है! कृपया नए पासवर्ड से पुनः लॉगिन करें।');
+            closeSettingsModal();
+            handleLogout();
+        }
+
+        // INIT ON LOAD
+        initManualEntryGrid();
+        populateReportsDropdown();
+        loadSavedLogo();
+    </script>
+</body>
+</html>
