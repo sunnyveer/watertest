@@ -1,70 +1,105 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>जलकल विभाग - वाटर सैंपल व सर्टिफिकेट मैनेजर</title>
     <!-- EmailJS SDK for Real OTP -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Times New Roman', Times, serif, Arial; }
-        body { background-color: #eef2f5; padding: 10px; }
+        body { background-color: #eef2f5; padding: 8px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
         
         /* LOGIN OVERLAY STYLES */
         .login-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); z-index: 999999;
             display: flex; justify-content: center; align-items: center;
+            padding: 16px;
         }
         .login-box {
-            background: #fff; width: 90%; max-width: 380px; padding: 25px;
-            border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center;
+            background: #fff; width: 90%; max-width: 400px; padding: 24px 20px;
+            border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;
         }
-        .login-box h2 { color: #0d47a1; margin-bottom: 15px; font-size: 20px; font-weight: bold; }
+        .login-box h2 { color: #0d47a1; margin-bottom: 16px; font-size: clamp(18px, 3vw, 24px); font-weight: bold; }
         .login-box input {
-            width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc;
-            border-radius: 5px; font-size: 14px; outline: none;
+            width: 100%; padding: 10px 12px; margin: 8px 0; border: 1px solid #ccc;
+            border-radius: 6px; font-size: clamp(14px, 1.5vw, 16px); outline: none;
         }
         .login-btn {
-            width: 100%; padding: 10px; background: #0d47a1; color: white;
-            border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 10px;
+            width: 100%; padding: 12px; background: #0d47a1; color: white;
+            border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px;
+            font-size: clamp(14px, 1.5vw, 16px);
         }
         .login-btn:hover { background: #082d68; }
 
         /* USER HEADER BAR */
         .user-bar {
-            max-width: 950px; margin: 0 auto 10px auto; background: #34495e; color: white;
-            padding: 8px 15px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 13px;
+            max-width: 1100px; width: 100%; margin: 0 auto 10px auto; background: #34495e; color: white;
+            padding: 8px 16px; border-radius: 8px; display: flex; flex-wrap: wrap;
+            justify-content: space-between; align-items: center; font-size: clamp(12px, 1.2vw, 14px);
+            gap: 6px;
         }
+        .user-bar > span { white-space: nowrap; }
+        .user-bar > div { display: flex; flex-wrap: wrap; gap: 6px; }
 
+        /* TAB NAVIGATION */
         .tab-nav {
-            display: flex; gap: 5px; max-width: 950px; margin: 0 auto 15px auto;
-            background: #fff; padding: 8px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex; flex-wrap: wrap; gap: 5px; max-width: 1100px; width: 100%;
+            margin: 0 auto 12px auto; background: #fff; padding: 8px;
+            border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .tab-btn {
-            flex: 1; padding: 12px; border: none; background: #e9ecef; color: #333;
-            font-weight: bold; font-size: 14px; cursor: pointer; border-radius: 5px; transition: 0.2s;
+            flex: 1 1 auto; min-width: 120px; padding: 10px 12px; border: none;
+            background: #e9ecef; color: #333; font-weight: bold;
+            font-size: clamp(12px, 1.2vw, 14px); cursor: pointer; border-radius: 6px;
+            transition: 0.2s; text-align: center; white-space: nowrap;
         }
         .tab-btn.active { background: #0d47a1; color: white; }
+        .tab-btn:hover:not(.active) { background: #dde1e6; }
 
         .app-card {
-            max-width: 950px; margin: 0 auto; background: #fff; padding: 20px;
-            border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 1100px; width: 100%; margin: 0 auto; background: #fff; padding: 16px 20px;
+            border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
         .tab-content { display: none !important; }
         .tab-content.active { display: block !important; }
 
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 15px; }
-        .input-group { display: flex; flex-direction: column; gap: 4px; }
-        .input-group label { font-size: 12px; font-weight: bold; color: #333; }
-        .input-group input, .input-group select { padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; outline: none; background: #fff; }
+        /* FORM GRID - RESPONSIVE */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .input-group {
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .input-group label {
+            font-size: clamp(11px, 1.1vw, 13px);
+            font-weight: bold; color: #333;
+        }
+        .input-group input, .input-group select {
+            padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;
+            font-size: clamp(12px, 1.2vw, 14px); outline: none; background: #fff;
+            width: 100%;
+        }
         .section-header {
-            font-size: 15px; font-weight: bold; color: #0d47a1; margin: 15px 0 10px 0;
-            padding-bottom: 5px; border-bottom: 2px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;
+            font-size: clamp(14px, 1.5vw, 17px);
+            font-weight: bold; color: #0d47a1; margin: 12px 0 10px 0;
+            padding-bottom: 5px; border-bottom: 2px solid #e0e0e0;
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+            gap: 8px;
         }
 
-        .btn { padding: 8px 14px; border: none; border-radius: 4px; color: white; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .btn {
+            padding: 8px 14px; border: none; border-radius: 4px; color: white;
+            font-weight: bold; cursor: pointer; font-size: clamp(12px, 1.2vw, 14px);
+            white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;
+            transition: 0.2s;
+        }
+        .btn:hover { opacity: 0.85; transform: scale(0.98); }
         .btn-green { background-color: #27ae60; }
         .btn-orange { background-color: #f39c12; }
         .btn-red { background-color: #d32f2f; }
@@ -72,65 +107,189 @@
         .btn-blue { background-color: #1976d2; }
         .btn-dark { background-color: #34495e; }
 
-        /* LOGO & HEADER STYLES */
-        .header-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 8px; text-align: center; }
-        .header-logo { width: 90px; height: 90px; object-fit: contain; }
-        .report-title-section h2 { font-size: 20px; color: #000; font-weight: bold; font-family: 'Times New Roman', serif; }
-        .report-title-section h4 { font-size: 13px; margin-top: 2px; font-weight: bold; }
+        /* LOGO & HEADER */
+        .header-container {
+            display: flex; flex-wrap: wrap; align-items: center;
+            justify-content: center; gap: 12px; margin-bottom: 8px; text-align: center;
+        }
+        .header-logo { width: clamp(60px, 8vw, 90px); height: clamp(60px, 8vw, 90px); object-fit: contain; }
+        .report-title-section h2 {
+            font-size: clamp(16px, 2.2vw, 22px);
+            color: #000; font-weight: bold; font-family: 'Times New Roman', serif;
+        }
+        .report-title-section h4 {
+            font-size: clamp(11px, 1.2vw, 14px);
+            margin-top: 2px; font-weight: bold;
+        }
 
         /* REPORT PRINT AREA */
-        #pdf-report-area, #pdf-certificate-area { background: white; padding: 15px; border: 1px solid #ddd; width: 100%; box-sizing: border-box; color: #000; }
-        .meta-info-box { font-size: 13px; font-weight: bold; margin-bottom: 8px; line-height: 1.5; }
-        .meta-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .meta-input { border: 1px solid #777; padding: 2px 6px; font-size: 13px; font-weight: bold; outline: none; background: transparent; }
+        #pdf-report-area, #pdf-certificate-area {
+            background: white; padding: 15px; border: 1px solid #ddd;
+            width: 100%; box-sizing: border-box; color: #000; overflow: hidden;
+        }
+        .meta-info-box { font-size: clamp(11px, 1.1vw, 13px); font-weight: bold; margin-bottom: 8px; line-height: 1.5; }
+        .meta-row {
+            display: flex; flex-wrap: wrap; justify-content: space-between;
+            align-items: center; gap: 6px; margin-bottom: 4px;
+        }
+        .meta-input {
+            border: 1px solid #777; padding: 2px 6px;
+            font-size: clamp(11px, 1.1vw, 13px); font-weight: bold;
+            outline: none; background: transparent; min-width: 60px;
+        }
 
-        .report-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 5px; }
-        .report-table th, .report-table td { border: 1px solid #000; padding: 3px 5px; }
+        .report-table {
+            width: 100%; border-collapse: collapse; font-size: clamp(10px, 1vw, 12px);
+            margin-top: 5px; table-layout: fixed;
+        }
+        .report-table th, .report-table td {
+            border: 1px solid #000; padding: 3px 5px; word-break: break-word;
+        }
         .report-table th { background: #fff; text-align: center; font-weight: bold; }
-        .report-table td input { width: 100%; border: none; outline: none; background: transparent; font-size: 11px; font-family: inherit; }
+        .report-table td input {
+            width: 100%; border: none; outline: none; background: transparent;
+            font-size: clamp(10px, 1vw, 12px); font-family: inherit;
+        }
 
-        /* CERTIFICATE TEXT WRAPPING FIX */
-        .cert-paragraph { text-align: justify; word-break: break-word; overflow-wrap: break-word; line-height: 1.8; font-size: 14px; }
-        .inline-editable { border-bottom: 1px solid #000; padding: 0 4px; font-weight: bold; outline: none; display: inline; }
+        /* CERTIFICATE */
+        .cert-paragraph {
+            text-align: justify; word-break: break-word; overflow-wrap: break-word;
+            line-height: 1.8; font-size: clamp(13px, 1.3vw, 16px);
+        }
+        .inline-editable {
+            border-bottom: 1px solid #000; padding: 0 4px;
+            font-weight: bold; outline: none; display: inline;
+            min-width: 80px;
+        }
 
-        /* DATABASE TABLE */
-        .db-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        .db-table th, .db-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        /* DATABASE TABLE - Responsive */
+        .db-table {
+            width: 100%; border-collapse: collapse; font-size: clamp(11px, 1.1vw, 13px);
+            overflow-x: auto; display: block;
+        }
+        .db-table thead, .db-table tbody { display: table; width: 100%; table-layout: fixed; }
+        .db-table th, .db-table td {
+            border: 1px solid #ddd; padding: 6px 8px; text-align: center; word-break: break-word;
+        }
         .db-table th { background: #0d47a1; color: white; }
         .db-table tr:nth-child(even) { background: #f9f9f9; }
 
-        /* 3D POPUP MODAL & SETTINGS MODAL */
+        /* MODAL */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); z-index: 99999;
-            justify-content: center; align-items: center;
+            justify-content: center; align-items: center; padding: 16px;
         }
         .modal-3d {
-            background: #fff; width: 95%; max-width: 900px; max-height: 90vh;
+            background: #fff; width: 95%; max-width: 950px; max-height: 90vh;
             border-radius: 12px; padding: 20px; overflow-y: auto;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.6); transform: scale(0.98); animation: popup3D 0.3s forwards ease-out;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
         }
         .modal-box {
-            background: #fff; width: 90%; max-width: 400px; border-radius: 10px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            background: #fff; width: 90%; max-width: 420px; border-radius: 10px;
+            padding: 24px 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
-        @keyframes popup3D { to { transform: scale(1); } }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0d47a1; padding-bottom: 10px; margin-bottom: 15px; }
-        .close-btn { background: #d32f2f; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .modal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; font-size: 11px; }
-        .modal-item { background: #f8f9fa; padding: 6px 8px; border-radius: 6px; border-left: 3px solid #0d47a1; display: flex; flex-direction: column; gap: 2px; }
-        .modal-item label { font-weight: bold; color: #333; font-size: 11px; }
-        .modal-item input, .modal-item select { padding: 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; width: 100%; outline: none; background: #fff; }
+        .modal-header {
+            display: flex; flex-wrap: wrap; justify-content: space-between;
+            align-items: center; border-bottom: 2px solid #0d47a1;
+            padding-bottom: 10px; margin-bottom: 15px; gap: 8px;
+        }
+        .modal-header h3 { font-size: clamp(16px, 1.8vw, 20px); }
+        .close-btn {
+            background: #d32f2f; color: white; border: none;
+            padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: bold;
+            font-size: clamp(12px, 1.2vw, 14px);
+        }
+        .modal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px; font-size: clamp(10px, 1vw, 12px);
+        }
+        .modal-item {
+            background: #f8f9fa; padding: 6px 8px; border-radius: 6px;
+            border-left: 3px solid #0d47a1; display: flex; flex-direction: column; gap: 2px;
+        }
+        .modal-item label { font-weight: bold; color: #333; font-size: clamp(10px, 1vw, 12px); }
+        .modal-item input, .modal-item select {
+            padding: 4px; border: 1px solid #ccc; border-radius: 4px;
+            font-size: clamp(11px, 1.1vw, 13px); width: 100%; outline: none; background: #fff;
+        }
 
+        /* ========== RESPONSIVE MEDIA QUERIES ========== */
+        /* Landscape Mode */
+        @media (max-width: 900px) and (orientation: landscape) {
+            .tab-btn { min-width: 80px; padding: 6px 8px; font-size: 11px; }
+            .form-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+            .app-card { padding: 12px 14px; }
+            .user-bar { font-size: 11px; padding: 4px 12px; }
+            .header-container { gap: 8px; }
+            .header-logo { width: 50px; height: 50px; }
+            .report-title-section h2 { font-size: 16px; }
+            .report-table { font-size: 9px; }
+            .report-table th, .report-table td { padding: 2px 3px; }
+            .modal-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+        }
+
+        /* Portrait Mode - Small Screens */
+        @media (max-width: 600px) and (orientation: portrait) {
+            body { padding: 4px; }
+            .tab-nav { padding: 4px; gap: 3px; }
+            .tab-btn { min-width: 60px; padding: 6px 6px; font-size: 10px; white-space: normal; }
+            .app-card { padding: 10px 12px; }
+            .form-grid { grid-template-columns: 1fr; gap: 8px; }
+            .section-header { font-size: 13px; flex-direction: column; align-items: flex-start; gap: 4px; }
+            .user-bar { flex-direction: column; align-items: stretch; text-align: center; gap: 4px; font-size: 11px; }
+            .user-bar > div { justify-content: center; }
+            .meta-row { flex-direction: column; align-items: flex-start; gap: 2px; }
+            .meta-input { width: 100% !important; }
+            .header-container { flex-direction: column; gap: 6px; }
+            .header-logo { width: 60px; height: 60px; }
+            .report-title-section h2 { font-size: 16px; }
+            .report-title-section h4 { font-size: 11px; }
+            .report-table { font-size: 9px; }
+            .report-table th, .report-table td { padding: 2px 3px; }
+            .db-table { font-size: 10px; }
+            .db-table th, .db-table td { padding: 4px 4px; }
+            .modal-3d { padding: 12px; }
+            .modal-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+            .modal-box { padding: 16px; }
+            .btn { padding: 6px 10px; font-size: 11px; }
+            .cert-paragraph { font-size: 13px; }
+            .inline-editable { min-width: 50px; }
+            .login-box { padding: 16px; }
+            .login-box h2 { font-size: 18px; }
+        }
+
+        /* Very Small Screens */
+        @media (max-width: 400px) {
+            .tab-btn { min-width: 50px; font-size: 9px; padding: 4px 4px; }
+            .form-grid { grid-template-columns: 1fr; gap: 6px; }
+            .modal-grid { grid-template-columns: 1fr; }
+            .report-table { font-size: 8px; }
+            .report-table th, .report-table td { padding: 1px 2px; }
+        }
+
+        /* PRINT STYLES - Unchanged */
         @media print {
-            @page { size: A4 portrait; margin: 10mm; }
+            @page { size: A4 portrait; margin: 8mm; }
             body { background: white; padding: 0; }
             .tab-nav, .no-print, .modal-overlay, .user-bar, .login-overlay { display: none !important; }
             .app-card { border: none; box-shadow: none; padding: 0; max-width: 100%; }
-            #pdf-report-area, #pdf-certificate-area { border: none; padding: 0; word-wrap: break-word; width: 100%; }
+            #pdf-report-area, #pdf-certificate-area { border: none; padding: 10px; }
             .meta-input { border: none !important; }
             .inline-editable { border-bottom: none !important; }
             input, textarea, select { border: none !important; resize: none; -webkit-appearance: none; -moz-appearance: none; appearance: none; background: transparent !important; }
+            .report-table { font-size: 10px; }
+            .db-table { display: table; }
+            .db-table thead, .db-table tbody { display: table-row-group; width: auto; table-layout: auto; }
         }
+
+        /* Utility */
+        .flex-wrap { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .flex-grow { flex: 1; min-width: 120px; }
+        .text-center { text-align: center; }
+        .w-full { width: 100%; }
+        .gap-4 { gap: 4px; }
     </style>
 </head>
 <body>
@@ -152,40 +311,38 @@
     <div id="userBar" class="user-bar" style="display: none;">
         <span>👤 लॉग इन यूज़र: <b id="loggedInUserDisplay">Admin</b> (<span id="userRoleDisplay">ADMIN</span>)</span>
         <div>
-            <button class="btn btn-purple" style="padding: 3px 8px; font-size: 11px;" onclick="openSettingsModal()">⚙️ Change ID/Password</button>
-            <button class="btn btn-red" style="padding: 3px 8px; font-size: 11px;" onclick="handleLogout()">🚪 Logout</button>
+            <button class="btn btn-purple" style="padding: 4px 10px; font-size: clamp(10px, 1vw, 12px);" onclick="openSettingsModal()">⚙️ Change ID</button>
+            <button class="btn btn-red" style="padding: 4px 10px; font-size: clamp(10px, 1vw, 12px);" onclick="handleLogout()">🚪 Logout</button>
         </div>
     </div>
 
     <!-- 3. TAB NAVIGATION & MAIN CONTENT -->
-    <div id="mainContent" style="display: none;">
+    <div id="mainContent" style="display: none; width: 100%;">
         <div class="tab-nav">
-            <button id="btnTabEntry" class="tab-btn active admin-only" onclick="switchTab('tab-entry', this)">📝 1. नया डेटा प्रविष्टि (Entry)</button>
-            <button id="btnTabReport" class="tab-btn" onclick="switchTab('tab-report', this)">🖨️ 2. टेस्ट रिपोर्ट (20 Params)</button>
-            <button id="btnTabCert" class="tab-btn" onclick="switchTab('tab-certificate', this)">📜 3. सर्टिफिकेट (Appendix-VIII)</button>
-            <button id="btnTabDb" class="tab-btn" onclick="switchTab('tab-database', this)">📂 4. रिकॉर्ड व बैकअप</button>
+            <button id="btnTabEntry" class="tab-btn active admin-only" onclick="switchTab('tab-entry', this)">📝 प्रविष्टि</button>
+            <button id="btnTabReport" class="tab-btn" onclick="switchTab('tab-report', this)">🖨️ रिपोर्ट</button>
+            <button id="btnTabCert" class="tab-btn" onclick="switchTab('tab-certificate', this)">📜 सर्टिफिकेट</button>
+            <button id="btnTabDb" class="tab-btn" onclick="switchTab('tab-database', this)">📂 रिकॉर्ड</button>
         </div>
 
         <div class="app-card">
             
             <!-- LOGO SELECTOR (ADMIN ONLY) -->
-            <div class="no-print admin-only" style="margin-bottom: 15px; background: #fff3cd; padding: 10px; border: 1px solid #ffeeba; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: bold; font-size: 13px; color: #856404;">🏢 विभाग का लोगो (Logo Settings):</span>
-                <div style="display: flex; gap: 10px; align-items: center;">
+            <div class="no-print admin-only" style="margin-bottom: 15px; background: #fff3cd; padding: 10px 14px; border: 1px solid #ffeeba; border-radius: 6px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;">
+                <span style="font-weight: bold; font-size: clamp(12px, 1.2vw, 14px); color: #856404;">🏢 विभाग का लोगो</span>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
                     <input type="file" id="logoFileInput" accept="image/*" style="display: none;" onchange="uploadCustomLogo(event)">
-                    <button class="btn btn-purple" onclick="document.getElementById('logoFileInput').click()">📁 लोगो फाइल चुनें (Select Logo)</button>
-                    <button class="btn btn-dark" style="padding: 4px 8px; font-size: 11px;" onclick="resetLogo()">रीसेट</button>
+                    <button class="btn btn-purple" style="font-size: clamp(10px, 1vw, 12px); padding: 6px 12px;" onclick="document.getElementById('logoFileInput').click()">📁 चुनें</button>
+                    <button class="btn btn-dark" style="font-size: clamp(10px, 1vw, 12px); padding: 6px 12px;" onclick="resetLogo()">↺ रीसेट</button>
                 </div>
             </div>
             
             <!-- TAB 1: ENTRY FORM -->
             <div id="tab-entry" class="tab-content active admin-only">
-                <div class="section-header">सैंपल व आवेदक विवरण (Basic Details)</div>
+                <div class="section-header">📋 सैंपल व आवेदक विवरण</div>
                 <div class="form-grid">
                     <div class="input-group"><label>सैंपल क्रम संख्या (Sr. No.):</label><input type="text" id="entrySrNo" value="164"></div>
                     <div class="input-group"><label>Witness Person / आवेदक:</label><input type="text" id="entryWitness" value="sanjay kumar gupta"></div>
-                    
-                    <!-- WATER SOURCE DROPDOWN SELECTION -->
                     <div class="input-group">
                         <label>पानी का स्रोत (Source):</label>
                         <select id="entrySource">
@@ -199,15 +356,14 @@
                             <option value="Water Treatment Plant (WTP)">Water Treatment Plant (WTP)</option>
                         </select>
                     </div>
-
                     <div class="input-group"><label>स्थान / पता (Location):</label><input type="text" id="entryLocation" value="brij en enclave colony"></div>
                     <div class="input-group"><label>टेस्ट दिनांक (Test Date):</label><input type="text" id="entryDate" value="04/04/2026"></div>
                     <div class="input-group"><label>जाँचकर्ता (Chemist Incharge):</label><input type="text" id="entryChemist" value="Mr Shambhu Nath (Chemist incharge)"></div>
                 </div>
 
                 <div class="section-header">
-                    <span>ऑटो-कैलकुलेशन हेतु मुख्य 4 रीडिंग</span>
-                    <button class="btn btn-blue" style="padding: 2px 8px; font-size: 11px;" onclick="autoCalculateAll()">⚡ Auto Calculate Values</button>
+                    <span>⚡ ऑटो-कैलकुलेशन हेतु मुख्य 4 रीडिंग</span>
+                    <button class="btn btn-blue" style="padding: 4px 12px; font-size: clamp(11px, 1.1vw, 13px);" onclick="autoCalculateAll()">⚡ Auto Calculate</button>
                 </div>
                 <div class="form-grid">
                     <div class="input-group"><label>1. pH Value (6.5 – 8.5):</label><input type="number" step="0.1" id="in_ph" value="6.9" oninput="autoCalculateAll()"></div>
@@ -216,34 +372,34 @@
                     <div class="input-group"><label>11. Colour Hazen Units (5 – 15):</label><input type="number" id="in_colour" value="5" oninput="autoCalculateAll()"></div>
                 </div>
 
-                <div class="section-header">समस्त 20 पैरामीटर्स (जरुरत पड़ने पर मैन्युअल एडिट करें)</div>
+                <div class="section-header">📊 समस्त 20 पैरामीटर्स</div>
                 <div class="form-grid" id="manualEntryGrid"></div>
 
-                <div style="margin-top: 15px; display: flex; gap: 10px;">
-                    <button class="btn btn-green" onclick="generateReportFromEntry()">रिपोर्ट व सर्टिफिकेट बनाएं ➔</button>
-                    <button class="btn btn-orange" onclick="clearEntryForm()">रीसेट करें (Reset)</button>
+                <div style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px;">
+                    <button class="btn btn-green" onclick="generateReportFromEntry()">📄 रिपोर्ट व सर्टिफिकेट बनाएं</button>
+                    <button class="btn btn-orange" onclick="clearEntryForm()">🔄 रीसेट करें</button>
                 </div>
             </div>
 
             <!-- TAB 2: TEST REPORT -->
             <div id="tab-report" class="tab-content">
-                <div class="no-print" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; background: #e8f4fc; padding: 10px; border-radius: 4px; gap: 10px;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <label style="font-weight: bold; font-size: 13px;">📂 सेव की गई रिपोर्ट चुनें:</label>
-                        <select id="savedReportsDropdown" onchange="loadSelectedReport(this.value)" style="padding: 5px; border-radius: 4px; border: 1px solid #aaa; font-weight: bold;">
+                <div class="no-print" style="margin-bottom: 12px; background: #e8f4fc; padding: 10px 14px; border-radius: 6px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;">
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+                        <label style="font-weight: bold; font-size: clamp(12px, 1.2vw, 14px);">📂 सेव की गई रिपोर्ट:</label>
+                        <select id="savedReportsDropdown" onchange="loadSelectedReport(this.value)" style="padding: 5px 8px; border-radius: 4px; border: 1px solid #aaa; font-weight: bold; font-size: clamp(11px, 1.1vw, 13px); max-width: 280px;">
                             <option value="">-- चुनें --</option>
                         </select>
                     </div>
-                    <div>
-                        <button class="btn btn-green admin-only" onclick="saveToDatabase()">💾 डेटाबेस में सेव करें</button>
-                        <button class="btn btn-red" onclick="downloadPDF()">📄 Print / Save PDF</button>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        <button class="btn btn-green admin-only" style="font-size: clamp(11px, 1.1vw, 13px);" onclick="saveToDatabase()">💾 सेव करें</button>
+                        <button class="btn btn-red" style="font-size: clamp(11px, 1.1vw, 13px);" onclick="downloadPDF()">📄 Print PDF</button>
                     </div>
                 </div>
 
                 <div id="pdf-report-area">
                     <div class="header-container">
                         <img id="appLogo1" class="header-logo" src="" alt="Department Logo" style="display:none;">
-                        <div id="placeholderLogo1" style="width: 80px; height: 80px; border: 2px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 11px; text-align: center; font-weight: bold; color: #666;">[स्थान: लोगो]</div>
+                        <div id="placeholderLogo1" style="width: clamp(60px, 8vw, 80px); height: clamp(60px, 8vw, 80px); border: 2px dashed #999; display: flex; align-items: center; justify-content: center; font-size: clamp(9px, 0.9vw, 11px); text-align: center; font-weight: bold; color: #666;">[लोगो]</div>
                         <div class="report-title-section">
                             <h2>जलकल विभाग नगर निगम, वाराणसी</h2>
                             <h4>TEST REPORT (As per IS 10500:2012)</h4>
@@ -258,34 +414,36 @@
                         </div>
                         <div class="meta-row" style="justify-content: flex-start; gap: 5px;">
                             <span>Location:</span>
-                            <input type="text" id="repLocation" class="meta-input" style="flex: 1;">
+                            <input type="text" id="repLocation" class="meta-input" style="flex: 1; min-width: 100px;">
                         </div>
                         <div class="meta-row">
-                            <span>Test Date: <input type="text" id="repDate" class="meta-input" style="width: 170px;"></span>
-                            <span>Sample collected by: <input type="text" id="repSource" class="meta-input" style="width: 170px;"></span>
-                            <span>Witness of person: <input type="text" id="repWitness" class="meta-input" style="width: 170px;"></span>
+                            <span>Test Date: <input type="text" id="repDate" class="meta-input" style="width: 150px;"></span>
+                            <span>Sample collected by: <input type="text" id="repSource" class="meta-input" style="width: 150px;"></span>
+                            <span>Witness: <input type="text" id="repWitness" class="meta-input" style="width: 150px;"></span>
                         </div>
                     </div>
 
-                    <table class="report-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 40px;">Sl.No.</th>
-                                <th>Parameter</th>
-                                <th style="width: 190px;">Parameter Acceptable-Permissible</th>
-                                <th style="width: 110px;">Observed Values</th>
-                                <th style="width: 100px;">Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody id="reportTableBody"></tbody>
-                    </table>
-
-                    <div style="margin-top: 10px; font-size: 11px; font-weight: bold;">
-                        Report of suitability of water for drinking purpose:
-                        <input type="text" id="repSuitability" value="Water is fit for drinking purpose" style="width: 100%; border: 1px solid #777; padding: 3px; font-weight: bold; margin-top: 3px;">
+                    <div style="overflow-x: auto;">
+                        <table class="report-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 6%;">Sl.</th>
+                                    <th style="width: 20%;">Parameter</th>
+                                    <th style="width: 25%;">Acceptable-Permissible</th>
+                                    <th style="width: 18%;">Observed Values</th>
+                                    <th style="width: 15%;">Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportTableBody"></tbody>
+                        </table>
                     </div>
 
-                    <div style="margin-top: 25px; text-align: right; float: right; width: 220px; font-size: 11px; font-weight: bold;">
+                    <div style="margin-top: 10px; font-size: clamp(11px, 1.1vw, 13px); font-weight: bold;">
+                        Report of suitability of water for drinking purpose:
+                        <input type="text" id="repSuitability" value="Water is fit for drinking purpose" style="width: 100%; border: 1px solid #777; padding: 3px; font-weight: bold; margin-top: 3px; font-size: clamp(11px, 1.1vw, 13px);">
+                    </div>
+
+                    <div style="margin-top: 25px; text-align: right; float: right; width: clamp(180px, 25vw, 220px); font-size: clamp(11px, 1.1vw, 13px); font-weight: bold;">
                         Signature - Chemist<br>
                         जलकल विभाग, नगर निगम<br>
                         वाराणसी
@@ -296,21 +454,21 @@
 
             <!-- TAB 3: CERTIFICATE -->
             <div id="tab-certificate" class="tab-content">
-                <div class="no-print" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; background: #e8f4fc; padding: 10px; border-radius: 4px;">
-                    <span>📜 <b>Safe Drinking Water Certificate (Appendix-VIII)</b></span>
-                    <button class="btn btn-red" onclick="downloadPDF()">📄 Print Certificate</button>
+                <div class="no-print" style="margin-bottom: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: #e8f4fc; padding: 10px 14px; border-radius: 6px; gap: 8px;">
+                    <span style="font-weight: bold; font-size: clamp(13px, 1.3vw, 15px);">📜 Safe Drinking Water Certificate</span>
+                    <button class="btn btn-red" style="font-size: clamp(11px, 1.1vw, 13px);" onclick="downloadPDF()">📄 Print Certificate</button>
                 </div>
 
-                <div id="pdf-certificate-area" style="padding: 20px 30px;">
+                <div id="pdf-certificate-area" style="padding: 16px 20px;">
                     <div class="header-container" style="flex-direction: column; text-align: center; gap: 5px;">
-                        <img id="appLogo2" class="header-logo" src="" alt="Department Logo" style="display:none; width: 80px; height: 80px;">
-                        <div id="placeholderLogo2" style="width: 80px; height: 80px; border: 2px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 10px; text-align: center; font-weight: bold; color: #666; margin: 0 auto;">[स्थान: लोगो]</div>
-                        <h3 style="font-size: 15px; font-weight: bold; text-decoration: underline; margin-top: 5px;">APPENDIX-VIII</h3>
-                        <h3 style="font-size: 15px; font-weight: bold; text-decoration: underline;">PROFORMA REGARDING SAFE DRINKING WATER</h3>
-                        <h2 style="font-size: 18px; font-weight: bold; margin-top: 5px;">CERTIFICATE</h2>
+                        <img id="appLogo2" class="header-logo" src="" alt="Department Logo" style="display:none; width: clamp(60px, 8vw, 80px); height: clamp(60px, 8vw, 80px);">
+                        <div id="placeholderLogo2" style="width: clamp(60px, 8vw, 80px); height: clamp(60px, 8vw, 80px); border: 2px dashed #999; display: flex; align-items: center; justify-content: center; font-size: clamp(9px, 0.9vw, 11px); text-align: center; font-weight: bold; color: #666; margin: 0 auto;">[लोगो]</div>
+                        <h3 style="font-size: clamp(13px, 1.3vw, 16px); font-weight: bold; text-decoration: underline; margin-top: 5px;">APPENDIX-VIII</h3>
+                        <h3 style="font-size: clamp(13px, 1.3vw, 16px); font-weight: bold; text-decoration: underline;">PROFORMA REGARDING SAFE DRINKING WATER</h3>
+                        <h2 style="font-size: clamp(16px, 1.8vw, 20px); font-weight: bold; margin-top: 5px;">CERTIFICATE</h2>
                     </div>
 
-                    <div style="display: flex; justify-content: space-between; margin-top: 20px; font-weight: bold; font-size: 14px;">
+                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; margin-top: 20px; font-weight: bold; font-size: clamp(13px, 1.3vw, 15px); gap: 8px;">
                         <span>NO- <span id="certNo" class="inline-editable" contenteditable="true">JK/2026/164</span></span>
                         <span>Date- <span id="certDate" class="inline-editable" contenteditable="true">04/04/2026</span></span>
                     </div>
@@ -324,20 +482,20 @@
                         and found that the Chemical and Bacteriological test of water sample is satisfactory and potable.
                     </p>
 
-                    <div style="margin-top: 15px; font-size: 14px; text-indent: 20px;">
+                    <div style="margin-top: 15px; font-size: clamp(13px, 1.3vw, 15px); text-indent: 20px;">
                         The above valid for a period of <b>06 months</b>.
                     </div>
 
-                    <div style="margin-top: 50px; float: right; width: 230px; font-size: 13px; line-height: 1.6;">
+                    <div style="margin-top: 50px; float: right; width: clamp(180px, 25vw, 230px); font-size: clamp(12px, 1.2vw, 14px); line-height: 1.6;">
                         Signature: ………………………………<br>
                         Name: ……………………………………<br>
                         Designation: ……………………………
                     </div>
                     <div style="clear: both;"></div>
 
-                    <div style="margin-top: 20px; font-weight: bold; font-size: 13px;">
+                    <div style="margin-top: 20px; font-weight: bold; font-size: clamp(12px, 1.2vw, 14px);">
                         To,<br>
-                        <div id="certToAddress" class="inline-editable" contenteditable="true" style="display: inline-block; min-width: 300px; white-space: pre-line; line-height: 1.4; margin-top: 4px;">sanjay kumar gupta&#10;brij en enclave colony&#10;(Name & Address of the Institution)</div>
+                        <div id="certToAddress" class="inline-editable" contenteditable="true" style="display: inline-block; min-width: 200px; white-space: pre-line; line-height: 1.4; margin-top: 4px;">sanjay kumar gupta&#10;brij en enclave colony&#10;(Name & Address of the Institution)</div>
                     </div>
                 </div>
             </div>
@@ -345,28 +503,30 @@
             <!-- TAB 4: DATABASE & BACKUP -->
             <div id="tab-database" class="tab-content">
                 <div class="section-header">
-                    <span>सुरक्षित रिकॉर्ड्स डेटाबेस</span>
-                    <div class="admin-only" style="display: flex; gap: 8px;">
-                        <button class="btn btn-dark" onclick="exportBackup()">📥 Backup Data</button>
-                        <button class="btn btn-blue" onclick="document.getElementById('restoreFile').click()">📤 Restore Data</button>
+                    <span>📂 सुरक्षित रिकॉर्ड्स डेटाबेस</span>
+                    <div class="admin-only" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        <button class="btn btn-dark" style="font-size: clamp(11px, 1.1vw, 13px); padding: 4px 12px;" onclick="exportBackup()">📥 Backup</button>
+                        <button class="btn btn-blue" style="font-size: clamp(11px, 1.1vw, 13px); padding: 4px 12px;" onclick="document.getElementById('restoreFile').click()">📤 Restore</button>
                         <input type="file" id="restoreFile" style="display: none;" accept=".json" onchange="importBackup(event)">
                     </div>
                 </div>
-                <table class="db-table">
-                    <thead>
-                        <tr>
-                            <th>Sr. No</th>
-                            <th>व्यक्ति / संस्था</th>
-                            <th>स्थान (Location)</th>
-                            <th>TDS</th>
-                            <th>pH</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="databaseBody">
-                        <tr><td colspan="6">कोई रिकॉर्ड सेव नहीं है।</td></tr>
-                    </tbody>
-                </table>
+                <div style="overflow-x: auto;">
+                    <table class="db-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 12%;">Sr. No</th>
+                                <th style="width: 22%;">व्यक्ति / संस्था</th>
+                                <th style="width: 22%;">स्थान (Location)</th>
+                                <th style="width: 12%;">TDS</th>
+                                <th style="width: 12%;">pH</th>
+                                <th style="width: 20%;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="databaseBody">
+                            <tr><td colspan="6">कोई रिकॉर्ड सेव नहीं है।</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
         </div>
@@ -376,11 +536,11 @@
     <div id="modalOverlay" class="modal-overlay">
         <div class="modal-3d">
             <div class="modal-header">
-                <h3>✏️ Edit All 20 Parameters in 3D Popup</h3>
+                <h3>✏️ Edit All 20 Parameters</h3>
                 <button class="close-btn" onclick="closePopup()">✕ Close</button>
             </div>
             <div id="modalContent" class="modal-grid"></div>
-            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+            <div style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end;">
                 <button class="btn btn-red" id="popupPdfBtn">📄 Print PDF</button>
                 <button class="btn btn-green admin-only" id="popupSaveBtn">💾 Save Changes</button>
                 <button class="btn btn-dark" onclick="closePopup()">✕ Cancel</button>
@@ -391,39 +551,41 @@
     <!-- 5. CHANGE ID / PASSWORD & OTP MODAL -->
     <div id="settingsModal" class="modal-overlay">
         <div class="modal-box">
-            <h3 style="color: #0d47a1; margin-bottom: 12px;">⚙️ ID व पासवर्ड बदलें</h3>
+            <h3 style="color: #0d47a1; margin-bottom: 12px; font-size: clamp(16px, 1.8vw, 20px);">⚙️ ID व पासवर्ड बदलें</h3>
             
             <div class="input-group" style="margin-bottom: 8px;">
-                <label>नया यूज़रनेम (Username):</label>
-                <input type="text" id="newUsername">
+                <label style="font-size: clamp(12px, 1.2vw, 14px);">नया यूज़रनेम:</label>
+                <input type="text" id="newUsername" style="font-size: clamp(13px, 1.3vw, 15px);">
             </div>
             <div class="input-group" style="margin-bottom: 8px;">
-                <label>नया पासवर्ड (New Password):</label>
-                <input type="password" id="newPassword">
+                <label style="font-size: clamp(12px, 1.2vw, 14px);">नया पासवर्ड:</label>
+                <input type="password" id="newPassword" style="font-size: clamp(13px, 1.3vw, 15px);">
             </div>
             <div class="input-group" style="margin-bottom: 12px;">
-                <label>आपका ईमेल (OTP प्राप्त करने के लिए):</label>
-                <input type="email" id="userEmail" placeholder="example@gmail.com">
+                <label style="font-size: clamp(12px, 1.2vw, 14px);">आपका ईमेल (OTP के लिए):</label>
+                <input type="email" id="userEmail" placeholder="example@gmail.com" style="font-size: clamp(13px, 1.3vw, 15px);">
             </div>
 
-            <button class="btn btn-blue" style="width: 100%; margin-bottom: 10px;" onclick="sendOTP()">📧 Send Real OTP</button>
+            <button class="btn btn-blue" style="width: 100%; margin-bottom: 10px; font-size: clamp(13px, 1.3vw, 15px); padding: 10px;" onclick="sendOTP()">📧 Send Real OTP</button>
 
             <div id="otpSection" style="display: none; border-top: 1px dashed #ccc; padding-top: 10px; margin-top: 10px;">
                 <div class="input-group" style="margin-bottom: 8px;">
-                    <label>6-अंकों का OTP दर्ज करें:</label>
-                    <input type="text" id="enteredOTP" placeholder="Enter OTP">
+                    <label style="font-size: clamp(12px, 1.2vw, 14px);">6-अंकों का OTP दर्ज करें:</label>
+                    <input type="text" id="enteredOTP" placeholder="Enter OTP" style="font-size: clamp(13px, 1.3vw, 15px);">
                 </div>
-                <button class="btn btn-green" style="width: 100%;" onclick="verifyAndSaveCredentials()">✓ Verify OTP & Update</button>
+                <button class="btn btn-green" style="width: 100%; font-size: clamp(13px, 1.3vw, 15px); padding: 10px;" onclick="verifyAndSaveCredentials()">✓ Verify OTP & Update</button>
             </div>
 
-            <button class="btn btn-dark" style="width: 100%; margin-top: 10px;" onclick="closeSettingsModal()">✕ Cancel</button>
+            <button class="btn btn-dark" style="width: 100%; margin-top: 10px; font-size: clamp(13px, 1.3vw, 15px); padding: 10px;" onclick="closeSettingsModal()">✕ Cancel</button>
         </div>
     </div>
 
     <script>
-        // EmailJS Init
+        // EmailJS Init - REPLACE WITH YOUR ACTUAL CREDENTIALS
         (function(){
-            emailjs.init("YOUR_PUBLIC_KEY");
+            emailjs.init({
+                publicKey: "YOUR_PUBLIC_KEY", // ← Replace with your EmailJS public key
+            });
         })();
 
         const parameters = [
@@ -573,7 +735,6 @@
             if (btnElement) btnElement.classList.add('active');
         }
 
-        // FULL 20 PARAMETERS AUTO CALCULATE FUNCTION
         function autoCalculateAll() {
             const tds = parseFloat(document.getElementById('in_tds').value) || 0;
             const ph = document.getElementById('in_ph').value || "6.9";
@@ -615,7 +776,6 @@
             });
         }
 
-        // RESET FORM FUNCTION
         function clearEntryForm() {
             document.getElementById('entryWitness').value = '';
             document.getElementById('entryLocation').value = '';
@@ -723,7 +883,7 @@
             if (!tbody) return;
 
             if (db.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6">कोई रिकॉर्ड सेव नहीं है।</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">कोई रिकॉर्ड सेव नहीं है।</td></tr>';
                 return;
             }
 
@@ -741,9 +901,9 @@
                         <td>${tds}</td>
                         <td>${ph}</td>
                         <td>
-                            ${isAdmin ? `<button class="btn btn-purple" style="padding:3px 6px; font-size:11px;" onclick="open3DPopup(${idx})">👁️ 3D Edit</button>` : ''}
-                            <button class="btn btn-blue" style="padding:3px 6px; font-size:11px;" onclick="loadRecordToReport(${idx}); switchTab('tab-report', document.getElementById('btnTabReport'));">📄 View</button>
-                            ${isAdmin ? `<button class="btn btn-red" style="padding:3px 6px; font-size:11px;" onclick="deleteDatabaseRecord(${idx})">Del</button>` : ''}
+                            ${isAdmin ? `<button class="btn btn-purple" style="padding:3px 6px; font-size:clamp(9px,0.9vw,11px);" onclick="open3DPopup(${idx})">👁️ Edit</button>` : ''}
+                            <button class="btn btn-blue" style="padding:3px 6px; font-size:clamp(9px,0.9vw,11px);" onclick="loadRecordToReport(${idx}); switchTab('tab-report', document.getElementById('btnTabReport'));">📄 View</button>
+                            ${isAdmin ? `<button class="btn btn-red" style="padding:3px 6px; font-size:clamp(9px,0.9vw,11px);" onclick="deleteDatabaseRecord(${idx})">Del</button>` : ''}
                         </td>
                     </tr>
                 `;
@@ -940,18 +1100,23 @@
 
             generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
 
+            // REPLACE WITH YOUR ACTUAL EmailJS CREDENTIALS
+            const serviceID = "service_fy0whwv";
+            const templateID = "template_mbx7rnt";
+            const publicKey = "TppdUrBc4IBr_-ItX";
+
             const templateParams = {
                 to_email: email,
                 otp: generatedOTP
             };
 
-            emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
+            emailjs.send(serviceID, templateID, templateParams, publicKey)
                 .then(function(response) {
-                    alert('OTP आपके ईमेल पर भेज दिया गया है!');
+                    alert('✅ OTP आपके ईमेल पर भेज दिया गया है!');
                     document.getElementById('otpSection').style.display = 'block';
                 }, function(error) {
-                    alert('OTP भेजने में समस्या हुई। कृपया ईमेल जाँचें या कंसोल में देखें।');
-                    console.log('Test Mode OTP:', generatedOTP);
+                    alert('❌ OTP भेजने में समस्या हुई। कृपया अपनी EmailJS क्रेडेंशियल्स जाँचें और पुनः प्रयास करें।');
+                    console.log('⚠️ Test Mode OTP:', generatedOTP);
                     document.getElementById('otpSection').style.display = 'block';
                 });
         }
@@ -959,7 +1124,7 @@
         function verifyAndSaveCredentials() {
             const entered = document.getElementById('enteredOTP').value.trim();
             if (entered !== generatedOTP) {
-                alert('गलत OTP! कृपया पुनः प्रयास करें।');
+                alert('❌ गलत OTP! कृपया पुनः प्रयास करें।');
                 return;
             }
 
@@ -976,7 +1141,7 @@
             
             localStorage.setItem('jal_app_users', JSON.stringify(users));
 
-            alert('आपका ID और Password सफलतापूर्वक बदल दिया गया है! कृपया नए पासवर्ड से पुनः लॉगिन करें।');
+            alert('✅ आपका ID और Password सफलतापूर्वक बदल दिया गया है! कृपया नए पासवर्ड से पुनः लॉगिन करें।');
             closeSettingsModal();
             handleLogout();
         }
