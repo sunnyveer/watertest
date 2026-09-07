@@ -581,11 +581,9 @@
     </div>
 
     <script>
-        // EmailJS Init - REPLACE WITH YOUR ACTUAL CREDENTIALS
+        // ✅ EmailJS Init - सही तरीका (सिर्फ publicKey)
         (function(){
-            emailjs.init({
-                publicKey: "YOUR_PUBLIC_KEY", // ← Replace with your EmailJS public key
-            });
+            emailjs.init("TppdUrBc4IBr_-ItX");
         })();
 
         const parameters = [
@@ -1091,6 +1089,7 @@
             document.getElementById('settingsModal').style.display = 'none';
         }
 
+        // ✅ OTP SEND FUNCTION - FIXED
         function sendOTP() {
             const email = document.getElementById('userEmail').value.trim();
             if (!email) {
@@ -1099,23 +1098,24 @@
             }
 
             generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
-
-            // REPLACE WITH YOUR ACTUAL EmailJS CREDENTIALS
+            
             const serviceID = "service_fy0whwv";
             const templateID = "template_mbx7rnt";
-            const publicKey = "TppdUrBc4IBr_-ItX";
-
+            
             const templateParams = {
                 to_email: email,
                 otp: generatedOTP
             };
 
-            emailjs.send(serviceID, templateID, templateParams, publicKey)
+            // ✅ EmailJS v3 सही तरीका - बिना publicKey पैरामीटर के
+            emailjs.send(serviceID, templateID, templateParams)
                 .then(function(response) {
+                    console.log('✅ OTP Success:', response);
                     alert('✅ OTP आपके ईमेल पर भेज दिया गया है!');
                     document.getElementById('otpSection').style.display = 'block';
                 }, function(error) {
-                    alert('❌ OTP भेजने में समस्या हुई। कृपया अपनी EmailJS क्रेडेंशियल्स जाँचें और पुनः प्रयास करें।');
+                    console.log('❌ OTP Error:', error);
+                    alert('❌ OTP भेजने में समस्या: ' + (error.text || 'Unknown error'));
                     console.log('⚠️ Test Mode OTP:', generatedOTP);
                     document.getElementById('otpSection').style.display = 'block';
                 });
