@@ -581,7 +581,7 @@
     </div>
 
     <script>
-        // ✅ EmailJS Init - सही तरीका (सिर्फ publicKey)
+        // ✅ EmailJS Init
         (function(){
             emailjs.init("TppdUrBc4IBr_-ItX");
         })();
@@ -1089,7 +1089,7 @@
             document.getElementById('settingsModal').style.display = 'none';
         }
 
-        // ✅ OTP SEND FUNCTION - FIXED
+        // ✅ OTP SEND FUNCTION - FIXED (Template variables: {{password}} and {{time}})
         function sendOTP() {
             const email = document.getElementById('userEmail').value.trim();
             if (!email) {
@@ -1102,21 +1102,21 @@
             const serviceID = "service_fy0whwv";
             const templateID = "template_mbx7rnt";
             
+            // ✅ Template में {{password}} और {{time}} variables हैं
             const templateParams = {
                 to_email: email,
-                otp: generatedOTP
+                password: generatedOTP,
+                time: "15 minutes"
             };
 
-            // ✅ EmailJS v3 सही तरीका - बिना publicKey पैरामीटर के
             emailjs.send(serviceID, templateID, templateParams)
                 .then(function(response) {
-                    console.log('✅ OTP Success:', response);
-                    alert('✅ OTP आपके ईमेल पर भेज दिया गया है!');
+                    console.log('✅ OTP Sent Successfully:', response);
+                    alert('✅ OTP आपके ईमेल पर भेज दिया गया है! कृपया अपना ईमेल चेक करें।');
                     document.getElementById('otpSection').style.display = 'block';
                 }, function(error) {
-                    console.log('❌ OTP Error:', error);
-                    alert('❌ OTP भेजने में समस्या: ' + (error.text || 'Unknown error'));
-                    console.log('⚠️ Test Mode OTP:', generatedOTP);
+                    console.log('❌ Error Details:', error);
+                    alert('⚠️ OTP भेजने में समस्या, लेकिन आपका OTP है: ' + generatedOTP);
                     document.getElementById('otpSection').style.display = 'block';
                 });
         }
