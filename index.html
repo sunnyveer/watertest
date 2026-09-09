@@ -269,7 +269,7 @@
             .report-table th, .report-table td { padding: 1px 2px; }
         }
 
-        /* PRINT STYLES - Unchanged */
+        /* PRINT STYLES */
         @media print {
             @page { size: A4 portrait; margin: 8mm; }
             body { background: white; padding: 0; }
@@ -392,7 +392,7 @@
                     </div>
                     <div style="display: flex; flex-wrap: wrap; gap: 6px;">
                         <button class="btn btn-green admin-only" style="font-size: clamp(11px, 1.1vw, 13px);" onclick="saveToDatabase()">💾 सेव करें</button>
-                        <button class="btn btn-red" style="font-size: clamp(11px, 1.1vw, 13px);" onclick="downloadPDF()">📄 Print PDF</button>
+                        <button class="btn btn-red" style="font-size: clamp(11px, 1.1vw, 13px);" onclick="printPdf()">📄 Print / Save PDF</button>
                     </div>
                 </div>
 
@@ -456,7 +456,7 @@
             <div id="tab-certificate" class="tab-content">
                 <div class="no-print" style="margin-bottom: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: #e8f4fc; padding: 10px 14px; border-radius: 6px; gap: 8px;">
                     <span style="font-weight: bold; font-size: clamp(13px, 1.3vw, 15px);">📜 Safe Drinking Water Certificate</span>
-                    <button class="btn btn-red" style="font-size: clamp(11px, 1.1vw, 13px);" onclick="downloadPDF()">📄 Print Certificate</button>
+                    <button class="btn btn-red" style="font-size: clamp(11px, 1.1vw, 13px);" onclick="printPdf()">📄 Print Certificate</button>
                 </div>
 
                 <div id="pdf-certificate-area" style="padding: 16px 20px;">
@@ -839,20 +839,74 @@
             switchTab('tab-report', document.getElementById('btnTabReport'));
         }
 
-        function downloadPDF() { window.print(); }
+        // ✅ PDF Print Function - Browser's Native Print/Save Dialog
+        function printPdf() { 
+            window.print(); 
+        }
 
+        // ✅ Save to Database with Duplicate Check
         function saveToDatabase() {
-            if (currentUser.role !== 'ADMIN') return;
+            if (currentUser.role !== 'ADMIN') {
+                alert('❌ केवल ADMIN ही सेव कर सकता है!');
+                return;
+            }
+            
             const db = JSON.parse(localStorage.getItem('jal_manager_db')) || [];
             
+            // Current record data
+            const srNo = document.getElementById('repSrNo').value.trim();
+            const witness = document.getElementById('repWitness').value.trim();
+            const source = document.getElementById('repSource').value.trim();
+            const location = document.getElementById('repLocation').value.trim();
+            const date = document.getElementById('repDate').value.trim();
+            const chemist = document.getElementById('certChemist').innerText.trim();
+            const suitability = document.getElementById('repSuitability').value.trim();
+            
+            if (!srNo || !witness) {
+                alert('❌ कृपया Sr. No और Witness भरें!');
+                return;
+            }
+            
+            // Check for duplicate Sr. No
+            let existingIndex = -1;
+            if (activeRecordIndex === -1) {
+                // New record - check for duplicate Sr. No
+                existingIndex = db.findIndex(rec => rec.srNo === srNo);
+            } else {
+                // Editing existing record - check if Sr. No changed to another existing
+                const currentRec = db[activeRecordIndex];
+                if (currentRec && currentRec.srNo !== srNo) {
+                    existingIndex = db.findIndex((rec, idx) => rec.srNo === srNo && idx !== activeRecordIndex);
+                }
+            }
+            
+            // If duplicate found, ask user
+            if (existingIndex !== -1) {
+                const userChoice = confirm(
+                    `⚠️ Sr. No "${srNo}" पहले से मौजूद है!\n\n` +
+                    `"${db[existingIndex].witness}" - ${db[existingIndex].location}\n\n` +
+                    `क्या आप इस रिकॉर्ड को Replace करना चाहते हैं?\n` +
+                    `"OK" → Replace करें\n"Cancel" → सेव रद्द करें`
+                );
+                
+                if (!userChoice) {
+                    alert('❌ सेव रद्द कर दिया गया!');
+                    return;
+                }
+                
+                // Replace existing record
+                activeRecordIndex = existingIndex;
+            }
+            
+            // Create record data
             const recordData = {
-                srNo: document.getElementById('repSrNo').value,
-                witness: document.getElementById('repWitness').value,
-                source: document.getElementById('repSource').value,
-                location: document.getElementById('repLocation').value,
-                date: document.getElementById('repDate').value,
-                chemist: document.getElementById('certChemist').innerText,
-                suitability: document.getElementById('repSuitability').value,
+                srNo: srNo,
+                witness: witness,
+                source: source,
+                location: location,
+                date: date,
+                chemist: chemist,
+                suitability: suitability,
                 vals: {}
             };
 
@@ -865,13 +919,19 @@
                 };
             });
 
-            if (activeRecordIndex === -1) db.push(recordData);
-            else { db[activeRecordIndex] = recordData; activeRecordIndex = -1; }
+            // Save to database
+            if (activeRecordIndex === -1) {
+                db.push(recordData);
+                alert('✅ नया रिकॉर्ड सेव हो गया!');
+            } else {
+                db[activeRecordIndex] = recordData;
+                alert('✅ रिकॉर्ड अपडेट हो गया!');
+                activeRecordIndex = -1; // Reset after saving
+            }
 
             localStorage.setItem('jal_manager_db', JSON.stringify(db));
             renderDatabase();
             populateReportsDropdown();
-            alert('डेटाबेस में रिपोर्ट सेव हो गई!');
         }
 
         function renderDatabase() {
@@ -966,7 +1026,7 @@
                 loadRecordToReport(idx);
                 closePopup();
                 switchTab('tab-report', document.getElementById('btnTabReport'));
-                downloadPDF();
+                printPdf();
             };
 
             document.getElementById('modalOverlay').style.display = 'flex';
@@ -1089,7 +1149,7 @@
             document.getElementById('settingsModal').style.display = 'none';
         }
 
-        // ✅ OTP SEND FUNCTION - FIXED (Template variables: {{password}} and {{time}})
+        // ✅ OTP SEND FUNCTION - FIXED
         function sendOTP() {
             const email = document.getElementById('userEmail').value.trim();
             if (!email) {
@@ -1099,24 +1159,28 @@
 
             generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
             
+            console.log('📧 Sending OTP to:', email);
+            console.log('🔑 OTP Code:', generatedOTP);
+            
             const serviceID = "service_fy0whwv";
             const templateID = "template_mbx7rnt";
             
-            // ✅ Template में {{password}} और {{time}} variables हैं
             const templateParams = {
                 to_email: email,
                 password: generatedOTP,
                 time: "15 minutes"
             };
 
+            console.log('📤 Template Params:', templateParams);
+
             emailjs.send(serviceID, templateID, templateParams)
                 .then(function(response) {
-                    console.log('✅ OTP Sent Successfully:', response);
-                    alert('✅ OTP आपके ईमेल पर भेज दिया गया है! कृपया अपना ईमेल चेक करें।');
+                    console.log('✅ Success:', response);
+                    alert('✅ OTP आपके ईमेल पर भेज दिया गया है!');
                     document.getElementById('otpSection').style.display = 'block';
                 }, function(error) {
-                    console.log('❌ Error Details:', error);
-                    alert('⚠️ OTP भेजने में समस्या, लेकिन आपका OTP है: ' + generatedOTP);
+                    console.log('❌ Error:', error);
+                    alert('⚠️ आपका OTP: ' + generatedOTP + '\n(Email भेजने में समस्या हुई)');
                     document.getElementById('otpSection').style.display = 'block';
                 });
         }
